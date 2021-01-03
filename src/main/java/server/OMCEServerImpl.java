@@ -3,10 +3,16 @@ package server;
 import omce.ws.entities.Exam;
 import common.OMCEClient;
 import common.OMCEServer;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
@@ -85,8 +91,38 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
      * Generates a Hashmap with a copy of the exam for each student registered
      */
     public void generateStudentExams(String csvPath) {
+        createContentExam(csvPath);
         for (HashMap.Entry<String, OMCEClient> s : students.entrySet()) {
             studentExams.put(s.getKey(), ExamGenerator.generateExam(csvPath));
+        }
+    }
+
+    private void createContentExam(String csvPath) {
+        try (BufferedReader br = new BufferedReader(new FileReader(csvPath))) {
+            String line = br.readLine();
+            String cvsSplitBy = ";";
+            String[] fragments = line.split(cvsSplitBy);
+            Exam exam = new Exam(fragments[0],fragments[1],fragments[2],fragments[3]);
+            createExamWS(exam);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void createExamWS(Exam exam) {
+        try{
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            String string = "http://localhost:8080/createExam";
+            URI uri = new URI(string);
+            RestTemplate restTemplate = new RestTemplate();
+            HttpEntity<Exam> httpEntity = new HttpEntity<>(exam, headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(uri,httpEntity, String.class);
+            System.out.println(response.getStatusCode());
+        } catch (URISyntaxException e) {
+            System.out.println("Error");
+        }catch (HttpClientErrorException e) {
+            System.out.println("Exam already in Web Service");
         }
     }
 

@@ -44,7 +44,7 @@ public class OMCEWebController {
         Exam examDB = examRepository.findByContent(exam.getDescription(),
                 exam.getDate(), exam.getTime(), exam.getLocation());
         if (examDB != null)
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Exam exists");
         examRepository.save(exam);
         return ResponseEntity.ok(HttpStatus.CREATED);
     }

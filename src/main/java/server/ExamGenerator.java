@@ -16,11 +16,12 @@ public class ExamGenerator {
      * Once all the quizzes have been created, it returns an exam with his quizzes
      */
     public static Exam generateExam(String csvFile) {
-        String line;
         idQuiz = 0;
         ArrayList<Quiz> quizzes = new ArrayList<>();
 
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+            br.readLine(); // this will read the first line
+            String line;
             while ((line = br.readLine()) != null) {
                 Quiz quiz = getQuiz(line);
                 quizzes.add(quiz);
