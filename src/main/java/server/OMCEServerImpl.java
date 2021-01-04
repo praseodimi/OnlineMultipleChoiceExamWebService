@@ -3,10 +3,10 @@ package server;
 import omce.ws.entities.Exam;
 import common.OMCEClient;
 import common.OMCEServer;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import omce.ws.entities.Student;
+import omce.ws.entities.StudentGrade;
+import omce.ws.utils.StudentGradeInfo;
+import org.springframework.http.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -34,29 +34,73 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
     /**
      * Check if the student is registered, otherwise it is registered
      */
-    public void registerStudent(OMCEClient student, String studentId) {
-        if (students.containsKey(studentId)) {
+    public void registerStudent(OMCEClient student, String universityId) {
+        if (getStudentInWS(universityId) != null) {
             anotherStudentRegistered(student);
         } else {
-            registerNewStudent(student, studentId);
+            registerNewStudent(student, universityId);
         }
+
+
+//        if (students.containsKey(universityId)) {
+//            anotherStudentRegistered(student);
+//        } else {
+//            registerNewStudent(student, universityId);
+//        }
+    }
+
+    private Student getStudentInWS(String universityId) {
+        try{
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            String string = "http://localhost:8080/getStudent/"+universityId;
+            URI uri = new URI(string);
+            RestTemplate restTemplate = new RestTemplate();
+            HttpEntity<String> httpEntity = new HttpEntity<>(headers);
+            ResponseEntity<Student> response = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, Student.class);
+            return response.getBody();
+        } catch (URISyntaxException e) {
+            System.out.println("Error");
+        }catch (HttpClientErrorException e) {
+            System.out.println("Exam already in Web Service");
+        }
+
+        return null;
     }
 
     /**
      * Stores the student into a Hashmap and notifies to the student that has registered.
      * In case it cannot establish a connection with the student, it removes it.
      */
-    private void registerNewStudent(OMCEClient student, String studentId) {
+    private void registerNewStudent(OMCEClient student, String universityId) {
         synchronized (this) {
-            System.out.println("Registering student " + studentId);
-            students.put(studentId, student);
+            System.out.println("Registering student " + universityId);
+            students.put(universityId, student);
+            createStudentWS(universityId);
             try {
                 student.notifyRegisterStudent();
                 this.notify();
             } catch (RemoteException e) {
-                System.out.println(studentId + " is not reachable to registering.");
-                removeStudent(studentId);
+                System.out.println(universityId + " is not reachable to registering.");
+                removeStudent(universityId);
             }
+        }
+    }
+
+    private void createStudentWS(String universityId) {
+        try{
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            String string = "http://localhost:8080/createStudent/" + universityId;
+            URI uri = new URI(string);
+            RestTemplate restTemplate = new RestTemplate();
+            HttpEntity<Student> httpEntity = new HttpEntity<>(new Student(universityId), headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(uri,httpEntity, String.class);
+            System.out.println(response.getStatusCode());
+        } catch (URISyntaxException e) {
+            System.out.println("Error");
+        }catch (HttpClientErrorException e) {
+            System.out.println("Student already in Web Service");
         }
     }
 
@@ -91,25 +135,23 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
      * Generates a Hashmap with a copy of the exam for each student registered
      */
     public void generateStudentExams(String csvPath) {
-        createContentExam(csvPath);
+        Exam exam = ExamGenerator.generateExam(csvPath);
+        Exam examDB = createExamWS(exam);
+        if (examDB == null){
+            System.out.println("Error getting the exam from WS");
+            System.exit(0);
+        }
+        exam.setExamId(examDB.getExamId());
         for (HashMap.Entry<String, OMCEClient> s : students.entrySet()) {
-            studentExams.put(s.getKey(), ExamGenerator.generateExam(csvPath));
+            try{
+                studentExams.put(s.getKey(), exam.clone());
+            } catch (CloneNotSupportedException e) {
+                System.out.println("Error cloning the exam");
+            }
         }
     }
 
-    private void createContentExam(String csvPath) {
-        try (BufferedReader br = new BufferedReader(new FileReader(csvPath))) {
-            String line = br.readLine();
-            String cvsSplitBy = ";";
-            String[] fragments = line.split(cvsSplitBy);
-            Exam exam = new Exam(fragments[0],fragments[1],fragments[2],fragments[3]);
-            createExamWS(exam);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void createExamWS(Exam exam) {
+    private Exam createExamWS(Exam exam) {
         try{
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -117,13 +159,29 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
             URI uri = new URI(string);
             RestTemplate restTemplate = new RestTemplate();
             HttpEntity<Exam> httpEntity = new HttpEntity<>(exam, headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(uri,httpEntity, String.class);
-            System.out.println(response.getStatusCode());
-        } catch (URISyntaxException e) {
-            System.out.println("Error");
-        }catch (HttpClientErrorException e) {
-            System.out.println("Exam already in Web Service");
+            ResponseEntity<Exam> response = restTemplate.postForEntity(uri,httpEntity, Exam.class);
+            return response.getBody();
+        } catch (URISyntaxException | HttpClientErrorException e) {
+            System.out.println("Error in WS");
         }
+        return null;
+    }
+
+    private Exam getExamByContent(Exam exam) {
+        Exam examDB = null;
+        try{
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            String string = "http://localhost:8080/searchExamByContent";
+            URI uri = new URI(string);
+            RestTemplate restTemplate = new RestTemplate();
+            HttpEntity<Exam> httpEntity = new HttpEntity<>(exam, headers);
+            ResponseEntity<Exam> response = restTemplate.postForEntity(uri,httpEntity, Exam.class);
+            examDB = response.getBody();
+        }  catch (URISyntaxException e) {
+            System.out.println("Error");
+        }
+        return examDB;
     }
 
     /**
@@ -162,8 +220,8 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
     /**
      * Check if the student has finished the exam
      */
-    public boolean isStudentExamFinished(String studentId) {
-        Exam exam = studentExams.get(studentId);
+    public boolean isStudentExamFinished(String universityId) {
+        Exam exam = studentExams.get(universityId);
         return exam.isFinished();
     }
 
@@ -194,41 +252,77 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
      * Sends a quiz or the result of the exam to the student.
      * In case it cannot establish a connection with the student, it removes it.
      */
-    private void sendQuizTo(String studentId, OMCEClient student) {
+    private void sendQuizTo(String universityId, OMCEClient student) {
         try {
 
-            Exam exam = studentExams.get(studentId);
+            Exam exam = studentExams.get(universityId);
             // Get the next quiz to send
             Quiz nextQuiz = exam.getNextQuiz();
             if (nextQuiz != null) {
-                students.get(studentId).notifyQuiz(nextQuiz.toString());
+                students.get(universityId).notifyQuiz(nextQuiz.toString());
             } else {
                 exam.setFinished(true);
                 // Get the result of the exam
                 String result = exam.calculateResult();
+                createGradeWS(universityId, exam.getExamId(), result);
                 student.notifyResult(result);
-                System.out.println("Student " + studentId + " has finished the exam.");
-                removeStudent(studentId);
+                System.out.println("Student " + universityId + " has finished the exam.");
+                removeStudent(universityId);
             }
         } catch (RemoteException e) {
-            System.out.println(studentId + " is not reachable to send quiz.");
-            error_students.add(studentId);
+            System.out.println(universityId + " is not reachable to send quiz.");
+            error_students.add(universityId);
+        }
+    }
+
+    private void createGradeWS(String universityId, Long examId, String grade) {
+        try{
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            String string = "http://localhost:8080/getStudent/"+universityId;
+            URI uri = new URI(string);
+            RestTemplate restTemplate = new RestTemplate();
+            HttpEntity<String> httpEntityGet = new HttpEntity<>(headers);
+            ResponseEntity<Student> studentResponse = restTemplate.exchange(uri, HttpMethod.GET, httpEntityGet, Student.class);
+            Student student = studentResponse.getBody();
+
+//            string = "http://localhost:8080/searchExamById/"+examId;
+//            uri = new URI(string);
+//            restTemplate = new RestTemplate();
+//            httpEntityGet = new HttpEntity<>(headers);
+//            ResponseEntity<Exam> examResponse = restTemplate.exchange(uri, HttpMethod.GET, httpEntityGet, Exam.class);
+//            Exam exam = examResponse.getBody();
+
+            if (student != null) {
+                string = "http://localhost:8080/uploadGrades";
+                uri = new URI(string);
+                restTemplate = new RestTemplate();
+                ArrayList<StudentGradeInfo> list = new ArrayList<>();
+                list.add(new StudentGradeInfo(student.getStudentId(), examId, grade));
+                HttpEntity<ArrayList<StudentGradeInfo>> httpEntity = new HttpEntity<>(list , headers);
+                ResponseEntity<String> response = restTemplate.postForEntity(uri,httpEntity, String.class);
+                System.out.println(response.getStatusCode());
+            }
+        } catch (URISyntaxException e) {
+            System.out.println("Error");
+        }catch (HttpClientErrorException e) {
+            System.out.println("Student already in Web Service");
         }
     }
 
     /**
      * Receives the student's answer and saves it in the student's exam
      */
-    public void sendAnswer(String studentId, String answerNum) {
+    public void sendAnswer(String universityId, String answerNum) {
         synchronized (this) {
-            Exam exam = studentExams.get(studentId);
+            Exam exam = studentExams.get(universityId);
             // Get the next quiz to send
             Quiz quiz = exam.getNextQuiz();
             quiz.setSelectedChoice(Integer.parseInt(answerNum));
             // Updates the exam with the received answer
             exam.setQuiz(quiz);
-            studentExams.put(studentId, exam);
-            studentToNotify = studentId;
+            studentExams.put(universityId, exam);
+            studentToNotify = universityId;
             this.notify();
         }
     }
@@ -245,6 +339,7 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
                 exam.setFinished(true);
                 // Get the result of the exam
                 String result = exam.calculateResult();
+                createGradeWS(s.getKey(), exam.getExamId(), result);
                 s.getValue().notifyResult(result);
             } catch (RemoteException e) {
                 System.out.println(s.getKey() + " is not reachable to send result.");
@@ -308,8 +403,8 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
     /**
      * Notify to the server the student who has leaved the exam.
      */
-    public void notifyStudentLeaved(String studentId) {
-        System.out.println("Student " + studentId + " has leaved the exam.");
-        removeStudent(studentId);
+    public void notifyStudentLeaved(String universityId) {
+        System.out.println("Student " + universityId + " has leaved the exam.");
+        removeStudent(universityId);
     }
 }

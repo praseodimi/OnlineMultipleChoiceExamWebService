@@ -10,6 +10,7 @@ import java.util.Arrays;
 
 public class ExamGenerator {
     private static int idQuiz;
+    private static String cvsSplitBy = ";";
 
     /**
      * Reads from the file and for each line of it creates a quiz.
@@ -18,9 +19,9 @@ public class ExamGenerator {
     public static Exam generateExam(String csvFile) {
         idQuiz = 0;
         ArrayList<Quiz> quizzes = new ArrayList<>();
-
+        String[] content = new String[4];
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
-            br.readLine(); // this will read the first line
+            content = getFirstLine(br.readLine()); // this will read the first line
             String line;
             while ((line = br.readLine()) != null) {
                 Quiz quiz = getQuiz(line);
@@ -29,12 +30,25 @@ public class ExamGenerator {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return new Exam(quizzes);
+
+        Exam exam = new Exam(quizzes);
+        setContent(content, exam);
+        return exam;
+    }
+
+    private static void setContent(String[] content, Exam exam) {
+        exam.setDescription(content[0]);
+        exam.setDate(content[1]);
+        exam.setTime(content[2]);
+        exam.setLocation(content[3]);
+    }
+
+    private static String[] getFirstLine(String line) {
+        return line.split(cvsSplitBy);
     }
 
     private static Quiz getQuiz(String line) {
         // Use semicolon as separator
-        String cvsSplitBy = ";";
         String[] fragments = line.split(cvsSplitBy);
         String question = fragments[0];
         //It is stored in a ArrayList from the second item to the penultimate

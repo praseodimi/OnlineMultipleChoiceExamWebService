@@ -39,14 +39,14 @@ public class OMCEWebController {
     // POST
 
     @PostMapping("/createExam")
-    public ResponseEntity createExam(@RequestBody Exam exam) {
+    public ResponseEntity<?> createExam(@RequestBody Exam exam) {
 
         Exam examDB = examRepository.findByContent(exam.getDescription(),
                 exam.getDate(), exam.getTime(), exam.getLocation());
         if (examDB != null)
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Exam exists");
-        examRepository.save(exam);
-        return ResponseEntity.ok(HttpStatus.CREATED);
+            return ResponseEntity.status(HttpStatus.OK).body(examDB);
+        Exam e = examRepository.save(exam);
+        return ResponseEntity.status(HttpStatus.CREATED).body(e);
     }
 
     // Modify exam’s description.
@@ -76,7 +76,7 @@ public class OMCEWebController {
 
     // Search exam content using the key or search them using textual description (full/partial search).
     // GET
-    @RequestMapping(value = "/searchExamById/{id}")
+    @GetMapping(value = "/searchExamById/{id}")
     public ResponseEntity<Exam> searchExamById(@PathVariable Long id) {
         Optional<Exam> exam = examRepository.findById(id);
         if (!exam.isPresent())
@@ -210,6 +210,36 @@ public class OMCEWebController {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         studentRepository.save(new Student(universityId));
         return ResponseEntity.ok(HttpStatus.CREATED);
+    }
+
+    /* Integration Functions */
+
+    // GET
+
+    @GetMapping(value = "/getStudent/{universityId}")
+    public ResponseEntity<Student>  getStudentByUniversityId(@PathVariable String universityId) {
+        return ResponseEntity.ok(studentRepository.findByUniversityId(universityId));
+    }
+
+    @GetMapping("/searchExamByContent/")
+    public ResponseEntity<?> searchExamByContent(@RequestBody Exam exam) {
+        Exam examDB = examRepository.findByContent(exam.getDescription(),
+                exam.getDate(), exam.getTime(), exam.getLocation());
+
+        if (examDB == null)
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Exam is not present");
+
+        return ResponseEntity.ok(examDB);
+    }
+
+    @DeleteMapping("/deleteStudent/{studentId}")
+    public ResponseEntity deleteStudent(@PathVariable Long studentId) {
+        Optional<Student> studentToDelete = studentRepository.findById(studentId);
+        if (!studentToDelete.isPresent())
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Exam is not present");
+
+        studentRepository.delete(studentToDelete.get());
+        return ResponseEntity.status(HttpStatus.OK).body("Student deleted correctly");
     }
 
 }

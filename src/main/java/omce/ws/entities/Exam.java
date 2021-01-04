@@ -10,19 +10,18 @@ import java.util.Set;
 
 @Entity
 @Table(name = "exams")
-public class Exam implements Serializable {
+public class Exam implements Serializable, Cloneable {
 
     @Id
     @Column(name = "exam_id")
     @GeneratedValue(strategy= GenerationType.IDENTITY)
-    @JsonIgnore
     private Long examId;
     @Transient
     @JsonIgnore
     private ArrayList<Quiz> quizzes;
     @Transient
     @JsonIgnore
-    private boolean isFinished;
+    private boolean finished;
     @Transient
     @JsonIgnore
     private String result = "0.0";
@@ -68,7 +67,7 @@ public class Exam implements Serializable {
 
     public Exam(ArrayList<Quiz> quizzes) {
         this.quizzes = quizzes;
-        this.isFinished = false;
+        this.finished = false;
     }
 
     @JsonIgnore
@@ -102,11 +101,11 @@ public class Exam implements Serializable {
 
     @JsonIgnore
     public boolean isFinished() {
-        return isFinished;
+        return finished;
     }
 
     public void setFinished(boolean finished) {
-        isFinished = finished;
+        this.finished = finished;
     }
 
     public Long getExamId() {
@@ -153,5 +152,17 @@ public class Exam implements Serializable {
         this.location = location;
     }
 
-
+    public Exam clone() throws CloneNotSupportedException{
+        super.clone();
+        Exam exam = new Exam();
+        exam.setExamId(this.examId);
+        exam.setDescription(this.description);
+        exam.setDate(this.date);
+        exam.setTime(this.time);
+        exam.setLocation(this.location);
+        exam.setQuizzes(this.quizzes);
+        exam.setResult(this.result);
+        exam.setFinished(this.finished);
+        return exam;
+    }
 }

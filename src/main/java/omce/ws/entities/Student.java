@@ -13,7 +13,6 @@ public class Student implements Serializable {
     @Id
     @Column(name = "student_id")
     @GeneratedValue(strategy= GenerationType.IDENTITY)
-    @JsonIgnore
     private Long studentId;
     private String universityId;
 
