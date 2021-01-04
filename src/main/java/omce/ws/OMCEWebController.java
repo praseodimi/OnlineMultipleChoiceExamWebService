@@ -157,7 +157,7 @@ public class OMCEWebController {
         try{
             for (StudentGradeInfo sg: studentGrades) {
                 StudentGrade studentGrade = new StudentGrade(
-                        studentRepository.findById(sg.getStudentId()).get(),
+                        sg.getUniversityId(),
                         examRepository.findById(sg.getExamId()).get(),
                         sg.getGrade());
                 studentGradeRepository.save(studentGrade);
@@ -171,15 +171,15 @@ public class OMCEWebController {
     // Download student’s grades.
     // GET
     @GetMapping("/downloadStudentGrades/{studentId}")
-    public ResponseEntity<?> downloadStudentGrades(@PathVariable Long studentId) {
+    public ResponseEntity<?> downloadStudentGrades(@PathVariable String universityId) {
 
-        List<StudentGrade> studentGrades = studentGradeRepository.findByStudentId(studentId);
+        List<StudentGrade> studentGrades = studentGradeRepository.findByUniversityId(universityId);
         if (studentGrades.size() == 0)
             return ResponseEntity.status(HttpStatus.CONFLICT).body("no hi ha StudentGrades");
 
         ArrayList<StudentGradeInfo> studentGradesInfo = new ArrayList<>();
         for (StudentGrade sg : studentGrades) {
-            StudentGradeInfo studentGradeInfo = new StudentGradeInfo(sg.getStudent().getStudentId(),
+            StudentGradeInfo studentGradeInfo = new StudentGradeInfo(universityId,
                     sg.getExam().getExamId(), sg.getGrade());
             studentGradesInfo.add(studentGradeInfo);
         }
@@ -188,7 +188,7 @@ public class OMCEWebController {
             ObjectMapper objectMapper = new ObjectMapper();
             String json = objectMapper.writeValueAsString(studentGradesInfo);
             byte[] examBytes = json.getBytes();
-            String fileName = "Grades" + studentId + ".json";
+            String fileName = "Grades" + universityId + ".json";
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
                     .contentType(MediaType.APPLICATION_JSON)
@@ -209,7 +209,7 @@ public class OMCEWebController {
         if (student != null)
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         studentRepository.save(new Student(universityId));
-        return ResponseEntity.ok(HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Student created");
     }
 
     /* Integration Functions */
@@ -232,13 +232,12 @@ public class OMCEWebController {
         return ResponseEntity.ok(examDB);
     }
 
-    @DeleteMapping("/deleteStudent/{studentId}")
-    public ResponseEntity deleteStudent(@PathVariable Long studentId) {
-        Optional<Student> studentToDelete = studentRepository.findById(studentId);
-        if (!studentToDelete.isPresent())
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Exam is not present");
-
-        studentRepository.delete(studentToDelete.get());
+    @DeleteMapping("/deleteStudent/{universityId}")
+    public ResponseEntity deleteStudent(@PathVariable String universityId) {
+        Student studentToDelete = studentRepository.findByUniversityId(universityId);
+        if (studentToDelete == null)
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Student is not present");
+        studentRepository.delete(studentToDelete);
         return ResponseEntity.status(HttpStatus.OK).body("Student deleted correctly");
     }
 

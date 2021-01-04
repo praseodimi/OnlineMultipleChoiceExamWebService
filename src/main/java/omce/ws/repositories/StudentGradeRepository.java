@@ -11,6 +11,6 @@ import java.util.List;
 
 public interface StudentGradeRepository extends CrudRepository<StudentGrade, StudentGradeKey>, JpaRepository<StudentGrade, StudentGradeKey>, JpaSpecificationExecutor<StudentGrade> {
 
-    @Query("SELECT sg FROM StudentGrade sg where sg.student.studentId = :studentId")
-    List<StudentGrade> findByStudentId(Long studentId);
+    @Query("SELECT sg FROM StudentGrade sg where sg.id.universityId = :universityId")
+    List<StudentGrade> findByUniversityId(String universityId);
 }

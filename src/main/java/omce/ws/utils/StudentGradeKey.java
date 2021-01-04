@@ -8,13 +8,13 @@ import java.util.Objects;
 @Embeddable
 public class StudentGradeKey implements Serializable {
 
-    @Column(name = "student_id")
-    private Long studentId;
+    @Column(name = "university_id")
+    private String universityId;
     @Column(name = "exam_id")
     private Long examId;
 
-    public StudentGradeKey(Long studentId, Long examId) {
-        this.studentId = studentId;
+    public StudentGradeKey(String universityId, Long examId) {
+        this.universityId = universityId;
         this.examId = examId;
     }
 
@@ -22,12 +22,12 @@ public class StudentGradeKey implements Serializable {
 
     }
 
-    public Long getStudentId() {
-        return studentId;
+    public String getUniversityId() {
+        return universityId;
     }
 
-    public void setStudentId(Long studentId) {
-        this.studentId = studentId;
+    public void setUniversityId(String universityId) {
+        this.universityId = universityId;
     }
 
     public Long getExamId() {
@@ -43,12 +43,12 @@ public class StudentGradeKey implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         StudentGradeKey that = (StudentGradeKey) o;
-        return Objects.equals(studentId, that.studentId) &&
+        return Objects.equals(universityId, that.universityId) &&
                 Objects.equals(examId, that.examId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(studentId, examId);
+        return Objects.hash(universityId, examId);
     }
 }

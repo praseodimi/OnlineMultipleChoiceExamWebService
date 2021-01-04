@@ -2,26 +2,26 @@ package omce.ws.utils;
 
 public class StudentGradeInfo {
 
-    private Long studentId;
+    private String universityId;
     private Long examId;
     private String grade;
 
-    public StudentGradeInfo(Long studentId, Long examId, String grade) {
-        this.studentId = studentId;
+    public StudentGradeInfo(String universityId, Long examId, String grade) {
+        this.universityId = universityId;
         this.examId = examId;
         this.grade = grade;
     }
 
-    public StudentGradeInfo(){
+    public StudentGradeInfo() {
 
     }
 
-    public Long getStudentId() {
-        return studentId;
+    public String getUniversityId() {
+        return universityId;
     }
 
-    public void setStudentId(Long studentId) {
-        this.studentId = studentId;
+    public void setUniversityId(String universityId) {
+        this.universityId = universityId;
     }
 
     public Long getExamId() {

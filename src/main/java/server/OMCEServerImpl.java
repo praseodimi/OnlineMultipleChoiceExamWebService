@@ -41,7 +41,6 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
             registerNewStudent(student, universityId);
         }
 
-
 //        if (students.containsKey(universityId)) {
 //            anotherStudentRegistered(student);
 //        } else {
@@ -53,7 +52,7 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
         try{
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            String string = "http://localhost:8080/getStudent/"+universityId;
+            String string = "http://localhost:8080/omcews/getStudent/"+universityId;
             URI uri = new URI(string);
             RestTemplate restTemplate = new RestTemplate();
             HttpEntity<String> httpEntity = new HttpEntity<>(headers);
@@ -91,7 +90,7 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
         try{
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            String string = "http://localhost:8080/createStudent/" + universityId;
+            String string = "http://localhost:8080/omcews/createStudent/" + universityId;
             URI uri = new URI(string);
             RestTemplate restTemplate = new RestTemplate();
             HttpEntity<Student> httpEntity = new HttpEntity<>(new Student(universityId), headers);
@@ -141,13 +140,10 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
             System.out.println("Error getting the exam from WS");
             System.exit(0);
         }
-        exam.setExamId(examDB.getExamId());
         for (HashMap.Entry<String, OMCEClient> s : students.entrySet()) {
-            try{
-                studentExams.put(s.getKey(), exam.clone());
-            } catch (CloneNotSupportedException e) {
-                System.out.println("Error cloning the exam");
-            }
+            Exam e = ExamGenerator.generateExam(csvPath);
+            e.setExamId(examDB.getExamId());
+            studentExams.put(s.getKey(), e);
         }
     }
 
@@ -155,7 +151,7 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
         try{
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            String string = "http://localhost:8080/createExam";
+            String string = "http://localhost:8080/omcews/createExam";
             URI uri = new URI(string);
             RestTemplate restTemplate = new RestTemplate();
             HttpEntity<Exam> httpEntity = new HttpEntity<>(exam, headers);
@@ -172,7 +168,7 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
         try{
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            String string = "http://localhost:8080/searchExamByContent";
+            String string = "http://localhost:8080/omcews/searchExamByContent";
             URI uri = new URI(string);
             RestTemplate restTemplate = new RestTemplate();
             HttpEntity<Exam> httpEntity = new HttpEntity<>(exam, headers);
@@ -254,7 +250,6 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
      */
     private void sendQuizTo(String universityId, OMCEClient student) {
         try {
-
             Exam exam = studentExams.get(universityId);
             // Get the next quiz to send
             Quiz nextQuiz = exam.getNextQuiz();
@@ -279,30 +274,15 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
         try{
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            String string = "http://localhost:8080/getStudent/"+universityId;
+            String string = "http://localhost:8080/omcews/uploadGrades";
             URI uri = new URI(string);
             RestTemplate restTemplate = new RestTemplate();
-            HttpEntity<String> httpEntityGet = new HttpEntity<>(headers);
-            ResponseEntity<Student> studentResponse = restTemplate.exchange(uri, HttpMethod.GET, httpEntityGet, Student.class);
-            Student student = studentResponse.getBody();
+            ArrayList<StudentGradeInfo> list = new ArrayList<>();
+            list.add(new StudentGradeInfo(universityId, examId, grade));
+            HttpEntity<ArrayList<StudentGradeInfo>> httpEntity = new HttpEntity<>(list , headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(uri,httpEntity, String.class);
+            System.out.println(response.getStatusCode());
 
-//            string = "http://localhost:8080/searchExamById/"+examId;
-//            uri = new URI(string);
-//            restTemplate = new RestTemplate();
-//            httpEntityGet = new HttpEntity<>(headers);
-//            ResponseEntity<Exam> examResponse = restTemplate.exchange(uri, HttpMethod.GET, httpEntityGet, Exam.class);
-//            Exam exam = examResponse.getBody();
-
-            if (student != null) {
-                string = "http://localhost:8080/uploadGrades";
-                uri = new URI(string);
-                restTemplate = new RestTemplate();
-                ArrayList<StudentGradeInfo> list = new ArrayList<>();
-                list.add(new StudentGradeInfo(student.getStudentId(), examId, grade));
-                HttpEntity<ArrayList<StudentGradeInfo>> httpEntity = new HttpEntity<>(list , headers);
-                ResponseEntity<String> response = restTemplate.postForEntity(uri,httpEntity, String.class);
-                System.out.println(response.getStatusCode());
-            }
         } catch (URISyntaxException e) {
             System.out.println("Error");
         }catch (HttpClientErrorException e) {
@@ -397,7 +377,22 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
      */
     private void removeStudent(String s) {
         this.students.remove(s);
+        removeStudentWS(s);
         System.out.println("There are " + getNumStudents() + " remaining students");
+    }
+
+    private void removeStudentWS(String universityId) {
+        try{
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            String string = "http://localhost:8080/omcews/deleteStudent/"+universityId;
+            URI uri = new URI(string);
+            RestTemplate restTemplate = new RestTemplate();
+            HttpEntity<String> httpEntity = new HttpEntity<>(headers);
+            ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.DELETE, httpEntity, String.class);
+        } catch (URISyntaxException | HttpClientErrorException e) {
+            System.out.println("Error in WS");
+        }
     }
 
     /**

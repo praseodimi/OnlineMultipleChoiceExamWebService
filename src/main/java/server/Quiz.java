@@ -24,11 +24,9 @@ public class Quiz {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        //String quiz =question + '\n';
         sb.append(question).append("\n");
         for (int i = 0; i < choices.size(); i++) {
             sb.append((i + 1)).append(") ").append(choices.get(i)).append("\n");
-            //quiz += (i+1) + ") " + choices.get(i) + '\n';
         }
         return sb.toString();
     }
@@ -43,5 +41,29 @@ public class Quiz {
 
     public int getId() {
         return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getQuestion() {
+        return question;
+    }
+
+    public void setQuestion(String question) {
+        this.question = question;
+    }
+
+    public ArrayList<String> getChoices() {
+        return choices;
+    }
+
+    public void setChoices(ArrayList<String> choices) {
+        this.choices = choices;
+    }
+
+    public void setCorrectAnswer(int correctAnswer) {
+        this.correctAnswer = correctAnswer;
     }
 }

@@ -20,8 +20,7 @@ public class Exam implements Serializable, Cloneable {
     @JsonIgnore
     private ArrayList<Quiz> quizzes;
     @Transient
-    @JsonIgnore
-    private boolean finished;
+    private boolean finished = false;
     @Transient
     @JsonIgnore
     private String result = "0.0";

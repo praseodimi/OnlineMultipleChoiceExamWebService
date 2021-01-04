@@ -17,24 +17,12 @@ public class Student implements Serializable {
     private String universityId;
 
 
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
-    @JsonIgnore
-    public Set<StudentGrade> grades;
-
     public Student(String universityId) {
         this.universityId = universityId;
     }
 
     public Student() {
 
-    }
-
-    public Set<StudentGrade> getGrades() {
-        return grades;
-    }
-
-    public void setGrades(Set<StudentGrade> grades) {
-        this.grades = grades;
     }
 
     public Long getStudentId() {

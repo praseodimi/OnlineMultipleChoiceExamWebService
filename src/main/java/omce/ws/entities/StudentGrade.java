@@ -9,22 +9,9 @@ import java.util.Objects;
 @Table(name = "StudentGrades")
 public class StudentGrade {
 
-    public StudentGradeKey getId() {
-        return id;
-    }
-
-    public void setId(StudentGradeKey id) {
-        this.id = id;
-    }
-
     @EmbeddedId
     @Id
     StudentGradeKey id;
-
-    @ManyToOne
-    @MapsId("studentId")
-    @JoinColumn(name = "student_id")
-    Student student;
 
     @ManyToOne
     @MapsId("examId")
@@ -33,23 +20,22 @@ public class StudentGrade {
 
     private String grade;
 
-    public StudentGrade(Student student, Exam exam, String grade) {
-        this.student = student;
+    public StudentGrade(String universityId, Exam exam, String grade) {
         this.exam = exam;
         this.grade = grade;
-        this.id = new StudentGradeKey(student.getStudentId(), exam.getExamId());
+        this.id = new StudentGradeKey(universityId, exam.getExamId());
     }
 
     public StudentGrade() {
 
     }
 
-    public Student getStudent() {
-        return student;
+    public StudentGradeKey getId() {
+        return id;
     }
 
-    public void setStudent(Student student) {
-        this.student = student;
+    public void setId(StudentGradeKey id) {
+        this.id = id;
     }
 
     public Exam getExam() {
@@ -74,13 +60,12 @@ public class StudentGrade {
         if (o == null || getClass() != o.getClass()) return false;
         StudentGrade that = (StudentGrade) o;
         return Objects.equals(id, that.id) &&
-                Objects.equals(student, that.student) &&
                 Objects.equals(exam, that.exam) &&
                 Objects.equals(grade, that.grade);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, student, exam, grade);
+        return Objects.hash(id, exam, grade);
     }
 }
