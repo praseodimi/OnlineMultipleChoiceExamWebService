@@ -1,12 +1,12 @@
-package client;
+package rmi.client;
 
-import common.OMCEClient;
+import rmi.common.OMCEClient;
 
 import java.rmi.RemoteException;
 
 /**
  * This class has been implemented to obtain the answer
- * passing it through stdin and then send it to the server
+ * passing it through stdin and then send it to the rmi.server
  */
 public class ThreadAnswer extends Thread {
 

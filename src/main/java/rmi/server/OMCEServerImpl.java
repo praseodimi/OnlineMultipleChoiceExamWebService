@@ -1,16 +1,17 @@
-package server;
+package rmi.server;
 
 import omce.ws.entities.Exam;
-import common.OMCEClient;
-import common.OMCEServer;
+import rmi.common.OMCEClient;
+import rmi.common.OMCEServer;
 import omce.ws.entities.Student;
-import omce.ws.entities.StudentGrade;
 import omce.ws.utils.StudentGradeInfo;
 import org.springframework.http.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.rmi.RemoteException;
@@ -396,7 +397,7 @@ public class OMCEServerImpl extends UnicastRemoteObject implements OMCEServer {
     }
 
     /**
-     * Notify to the server the student who has leaved the exam.
+     * Notify to the rmi.server the student who has leaved the exam.
      */
     public void notifyStudentLeaved(String universityId) {
         System.out.println("Student " + universityId + " has leaved the exam.");

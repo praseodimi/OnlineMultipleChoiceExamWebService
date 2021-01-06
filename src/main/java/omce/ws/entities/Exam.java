@@ -2,7 +2,8 @@ package omce.ws.entities;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import server.Quiz;
+import com.sun.istack.NotNull;
+import rmi.server.Quiz;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ import java.util.Set;
 public class Exam implements Serializable, Cloneable {
 
     @Id
-    @Column(name = "exam_id")
+    @Column(name = "exam_id", nullable = false)
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long examId;
     @Transient
@@ -24,9 +25,14 @@ public class Exam implements Serializable, Cloneable {
     @Transient
     @JsonIgnore
     private String result = "0.0";
+
+    @Column(nullable = false)
     private String description;
+    @Column(nullable = false)
     private String date;
+    @Column(nullable = false)
     private String time;
+    @Column(nullable = false)
     private String location;
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL)

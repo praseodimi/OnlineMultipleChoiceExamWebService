@@ -1,7 +1,7 @@
-package client;
+package rmi.client;
 
-import common.OMCEClient;
-import common.OMCEServer;
+import rmi.common.OMCEClient;
+import rmi.common.OMCEServer;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -37,30 +37,30 @@ public class Client {
                 String leave_key = "leave";
 
                 // Wait until exam starts
-                // Timeout if server does not start the exam within 10 minutes
+                // Timeout if rmi.server does not start the exam within 10 minutes
                 client.wait(600000);
 
                 // While the exam session has not finished
                 while (!server.isStudentExamFinished(studentId)) {
-                    // Thread to get the answer from stdin and send it to the server
+                    // Thread to get the answer from stdin and send it to the rmi.server
                     ThreadAnswer thread = new ThreadAnswer(client);
                     thread.start();
                     // Waiting for the next quiz or result
                     client.wait();
-                    // Check if the server writes finish
+                    // Check if the rmi.server writes finish
                     if ((server.isStudentExamFinished(studentId))) {
-                        // Changes the examFinished state if the server finish the exam
+                        // Changes the examFinished state if the rmi.server finish the exam
                         System.out.println("Enter \"leave\" to leave the exam");
                         client.setExamFinished(true);
                         break;
                     }
                     if (client.getAnswer().equals(leave_key)) {
-                        // Notify server he leaves.
+                        // Notify rmi.server he leaves.
                         server.notifyStudentLeaved(studentId);
                         System.exit(0);
                     }
                     server.sendAnswer(studentId, client.getAnswer());
-                    // Timeout for next quiz waiting is 5 minutes in case of bad connection with server
+                    // Timeout for next quiz waiting is 5 minutes in case of bad connection with rmi.server
                     client.wait(300000);
                 }
 

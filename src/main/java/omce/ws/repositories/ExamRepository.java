@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface ExamRepository extends CrudRepository<Exam, Long>, JpaRepository<Exam, Long>, JpaSpecificationExecutor<Exam> {
 
-    @Query("SELECT e FROM Exam e where e.description like %:description% ")
+    @Query("SELECT e FROM Exam e where lower(e.description) like lower(concat('%', concat(:description, '%')))")
     List<Exam> findByDescription(String description);
 
     @Query("SELECT e FROM Exam e where " +

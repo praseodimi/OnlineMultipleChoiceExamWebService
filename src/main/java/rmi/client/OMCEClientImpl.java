@@ -1,7 +1,7 @@
-package client;
+package rmi.client;
 
-import common.OMCEClient;
-import common.OMCEServer;
+import rmi.common.OMCEClient;
+import rmi.common.OMCEServer;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;

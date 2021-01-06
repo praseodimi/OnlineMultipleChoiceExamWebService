@@ -1,6 +1,6 @@
-package server;
+package rmi.server;
 
-import common.OMCEServer;
+import rmi.common.OMCEServer;
 
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -54,7 +54,7 @@ public class Server {
                     System.out.println("Students registered " + server.getNumStudents());
                     System.out.println("Write \"" + start_word + "\" to start the exam");
                     server.wait();
-                    //server.wait can be notified from the interrupt key, or the remote object implemented
+                    //rmi.server.wait can be notified from the interrupt key, or the remote object implemented
                 }
 
                 // Generates exams and notifies students of exam start
