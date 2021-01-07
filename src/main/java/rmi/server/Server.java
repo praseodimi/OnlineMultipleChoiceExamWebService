@@ -39,6 +39,8 @@ public class Server {
                 // Read the route of .csv file
                 csvPath = server.getFilePath("Please, enter the absolute route of .csv exam file.");
             } while (!server.isCsvPathFile(csvPath));
+
+            server.uploadExamToWS(csvPath);
             System.out.println("The exam is uploaded correctly");
 
             registry.bind("Hello", server);

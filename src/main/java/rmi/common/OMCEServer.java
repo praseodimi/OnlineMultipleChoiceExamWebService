@@ -31,4 +31,6 @@ public interface OMCEServer extends Remote {
     boolean isCsvPathDirectory(String csvPath) throws RemoteException;
 
     void notifyStudentLeaved(String studentId) throws RemoteException;
+
+    void uploadExamToWS(String csvPath) throws RemoteException;
 }

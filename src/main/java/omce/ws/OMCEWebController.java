@@ -40,18 +40,18 @@ public class OMCEWebController {
     // POST
 
     @PostMapping("/createExam")
-    public ResponseEntity<Exam> createExam(@RequestBody Exam exam) {
+    public ResponseEntity createExam(@RequestBody Exam exam) {
 
         Exam examDB = examRepository.findByContent(exam.getDescription(),
                 exam.getDate(), exam.getTime(), exam.getLocation());
         if (examDB != null)
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(examDB);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Exam is already created");
 
         try{
             Exam e = examRepository.save(exam);
-            return ResponseEntity.status(HttpStatus.CREATED).body(e);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Exam created");
         } catch (DataIntegrityViolationException e){
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error creating the exam");
         }
 
     }
@@ -230,13 +230,10 @@ public class OMCEWebController {
 
     // GET
 
-    @GetMapping(value = "/getStudent/{universityId}")
-    public ResponseEntity<Student>  getStudentByUniversityId(@PathVariable String universityId) {
-        return ResponseEntity.ok(studentRepository.findByUniversityId(universityId));
-    }
-
-    @GetMapping("/searchExamByContent/")
-    public ResponseEntity<?> searchExamByContent(@RequestBody Exam exam) {
+    @GetMapping("/searchExamByContent")
+    @ResponseBody
+    public ResponseEntity getExamByContent(@RequestParam List<String> content) {
+        Exam exam = new Exam(content.get(0), content.get(1), content.get(2), content.get(3));
         Exam examDB = examRepository.findByContent(exam.getDescription(),
                 exam.getDate(), exam.getTime(), exam.getLocation());
 
@@ -244,6 +241,11 @@ public class OMCEWebController {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Exam does not exist");
 
         return ResponseEntity.ok(examDB);
+    }
+
+    @GetMapping(value = "/getStudent/{universityId}")
+    public ResponseEntity<Student>  getStudentByUniversityId(@PathVariable String universityId) {
+        return ResponseEntity.ok(studentRepository.findByUniversityId(universityId));
     }
 
     @DeleteMapping("/deleteStudent/{universityId}")
