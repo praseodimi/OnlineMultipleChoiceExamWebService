@@ -2,29 +2,18 @@ package omce.ws.entities;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.sun.istack.NotNull;
-import rmi.server.Quiz;
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Set;
 
 @Entity
 @Table(name = "exams")
-public class Exam implements Serializable, Cloneable {
+public class Exam implements Serializable {
 
     @Id
     @Column(name = "exam_id", nullable = false)
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long examId;
-    @Transient
-    @JsonIgnore
-    private ArrayList<Quiz> quizzes;
-    @Transient
-    private boolean finished = false;
-    @Transient
-    @JsonIgnore
-    private String result = "0.0";
 
     @Column(nullable = false)
     private String description;
@@ -38,18 +27,6 @@ public class Exam implements Serializable, Cloneable {
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL)
     @JsonIgnore
     public Set<StudentGrade> grades;
-
-    public ArrayList<Quiz> getQuizzes() {
-        return quizzes;
-    }
-
-    public void setQuizzes(ArrayList<Quiz> quizzes) {
-        this.quizzes = quizzes;
-    }
-
-    public void setResult(String result) {
-        this.result = result;
-    }
 
     public Set<StudentGrade> getGrades() {
         return grades;
@@ -70,59 +47,12 @@ public class Exam implements Serializable, Cloneable {
 
     }
 
-    public Exam(ArrayList<Quiz> quizzes) {
-        this.quizzes = quizzes;
-        this.finished = false;
-    }
-
-    @JsonIgnore
-    public Quiz getNextQuiz() {
-        for (Quiz q : quizzes) {
-            if (q.getSelectedChoice() == null) {
-                return q;
-            }
-        }
-        return null;
-    }
-
-    public void setQuiz(Quiz quiz) {
-        quizzes.set(quiz.getId(), quiz);
-    }
-
-    public String calculateResult() {
-        int correct = 0;
-
-        // For each quiz check if the correct answer matches with selected choice
-        for (Quiz q : quizzes) {
-            if (q.getSelectedChoice() != null && q.getSelectedChoice() == q.getCorrectAnswer()) {
-                correct++;
-            }
-        }
-
-        result = String.valueOf(((float) correct / quizzes.size()) * 10.0);
-
-        return result;
-    }
-
-    @JsonIgnore
-    public boolean isFinished() {
-        return finished;
-    }
-
-    public void setFinished(boolean finished) {
-        this.finished = finished;
-    }
-
     public Long getExamId() {
         return examId;
     }
 
     public void setExamId(Long examId) {
         this.examId = examId;
-    }
-
-    public String getResult() {
-        return result;
     }
 
     public String getDescription() {
@@ -155,19 +85,5 @@ public class Exam implements Serializable, Cloneable {
 
     public void setLocation(String location) {
         this.location = location;
-    }
-
-    public Exam clone() throws CloneNotSupportedException{
-        super.clone();
-        Exam exam = new Exam();
-        exam.setExamId(this.examId);
-        exam.setDescription(this.description);
-        exam.setDate(this.date);
-        exam.setTime(this.time);
-        exam.setLocation(this.location);
-        exam.setQuizzes(this.quizzes);
-        exam.setResult(this.result);
-        exam.setFinished(this.finished);
-        return exam;
     }
 }

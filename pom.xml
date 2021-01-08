@@ -65,6 +65,8 @@
             <artifactId>hibernate-entitymanager</artifactId>
             <version>4.3.7.Final</version>
         </dependency>
+
+
     </dependencies>
 
     <build>
@@ -74,6 +76,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
+
     </build>
 
 </project>
