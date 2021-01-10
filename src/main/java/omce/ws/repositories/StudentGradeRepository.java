@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface StudentGradeRepository extends CrudRepository<StudentGrade, StudentGradeKey>, JpaRepository<StudentGrade, StudentGradeKey>, JpaSpecificationExecutor<StudentGrade> {
 
     @Query("SELECT sg FROM StudentGrade sg where sg.id.universityId = :universityId")
-    List<StudentGrade> findByUniversityId(String universityId);
+    Optional<List<StudentGrade>> findByUniversityId(String universityId);
 
     @Query("SELECT sg FROM StudentGrade sg where sg.id.examId = :examId")
     Optional<List<StudentGrade>> findByExamId(Long examId);

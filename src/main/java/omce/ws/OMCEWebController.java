@@ -107,6 +107,16 @@ public class OMCEWebController {
         return ResponseEntity.ok(exams);
     }
 
+    @GetMapping("/searchExams")
+    public ResponseEntity searchExams() {
+        List<Exam> exams = examRepository.findAll();
+
+        if (exams.size() == 0)
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Exam does not exist");
+
+        return ResponseEntity.ok(exams);
+    }
+
 
     // Download exams information. By Id or listing all the contents in the system.
     // GET
@@ -180,25 +190,52 @@ public class OMCEWebController {
 
     // Download student’s grades.
     // GET
-    @GetMapping("/downloadStudentGrades/{universityId}")
-    public ResponseEntity downloadStudentGrades(@PathVariable String universityId) {
+    @GetMapping("/downloadStudentGradesByUniversityId/{universityId}")
+    public ResponseEntity downloadStudentGradesByUniversityId(@PathVariable String universityId) {
 
-        List<StudentGrade> studentGrades = studentGradeRepository.findByUniversityId(universityId);
-        if (studentGrades.size() == 0)
+        Optional<List<StudentGrade>> studentGrades = studentGradeRepository.findByUniversityId(universityId);
+        if (!studentGrades.isPresent())
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Student does not exist");
 
+        return downloadStudentGradesFile(studentGrades.get(), universityId + "_grades.json");
+
+    }
+
+    @GetMapping("/downloadStudentGradesByExamId/{examId}")
+    public ResponseEntity downloadStudentGradesByExamId(@PathVariable Long examId) {
+
+        Optional<List<StudentGrade>> studentGrades = studentGradeRepository.findByExamId(examId);
+        if (!studentGrades.isPresent())
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("ExamId does not exist");
+
+        return downloadStudentGradesFile(studentGrades.get(), "Exam_" + examId + "_grades.json");
+
+    }
+
+    @GetMapping("/downloadStudentGrades")
+    public ResponseEntity downloadStudentGrades() {
+
+        List<StudentGrade> studentGrades = studentGradeRepository.findAll();
+        if (studentGrades == null)
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Grades do not exist");
+
+
+        return downloadStudentGradesFile(studentGrades, "Grades.json");
+
+    }
+
+    private ResponseEntity downloadStudentGradesFile(List<StudentGrade> studentGrades, String fileName) {
         ArrayList<StudentGradeInfo> studentGradesInfo = new ArrayList<>();
         for (StudentGrade sg : studentGrades) {
-            StudentGradeInfo studentGradeInfo = new StudentGradeInfo(universityId,
+            StudentGradeInfo studentGradeInfo = new StudentGradeInfo(sg.getId().getUniversityId(),
                     sg.getExam().getExamId(), sg.getGrade());
             studentGradesInfo.add(studentGradeInfo);
         }
 
-        try{
+        try {
             ObjectMapper objectMapper = new ObjectMapper();
             String json = objectMapper.writeValueAsString(studentGradesInfo);
             byte[] examBytes = json.getBytes();
-            String fileName = universityId + "grades.json";
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
                     .contentType(MediaType.APPLICATION_JSON)
@@ -206,7 +243,6 @@ public class OMCEWebController {
         } catch (JsonProcessingException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Error downloading grades");
         }
-
     }
 
     // Manage student’s access (by ID).
@@ -244,8 +280,11 @@ public class OMCEWebController {
     }
 
     @GetMapping(value = "/getStudent/{universityId}")
-    public ResponseEntity<Student>  getStudentByUniversityId(@PathVariable String universityId) {
-        return ResponseEntity.ok(studentRepository.findByUniversityId(universityId));
+    public ResponseEntity  getStudentByUniversityId(@PathVariable String universityId) {
+        Student student = studentRepository.findByUniversityId(universityId);
+        if (student == null)
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Student does not exist");
+        return ResponseEntity.ok(student);
     }
 
     @DeleteMapping("/deleteStudent/{universityId}")
